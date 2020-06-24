@@ -236,7 +236,7 @@ class Pyodbc(Integration):
             str_err = str(e)
             if self.debug:
                 print("Error: %s" % str(e))
-                status = "Failure - query_error: " + str_err
+            status = "Failure - query_error: " + str_err
         return mydf, status
 
 
