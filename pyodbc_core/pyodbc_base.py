@@ -245,7 +245,7 @@ class Pyodbc(Integration):
         print("Help for ODBC")
 
 
-    def as_pandas_DataFrame(self);
+    def as_pandas_DataFrame(self):
         cursor = self.cursor
         names = [metadata[0] for metadata in cursor.description]
         return pandas.DataFrame([dict(zip(names, row)) for row in cursor], columns=names)
