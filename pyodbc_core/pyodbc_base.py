@@ -110,28 +110,28 @@ class Pyodbc(Integration):
                 print("%s dsn not specified in %s%s_DSN or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
                 tdsn = input("Please type in the full %s DSN: " % self.name_str.capitalize())
                 self.opts[self.name_str + '_dsn'][0] = tdsn
-            print("Connecting to %s DSN: %s" % (self.name_str.capitalize(), self.opts['_dsn'][0]))
+            print("Connecting to %s DSN: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_dsn'][0]))
             print("")
 
             if prompt == True or self.opts[self.name_str  + "_host"][0] == '':
                 print("%s Host not specified in %s%s_HOST or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
                 thost = input("Please type in the full %s HOST: " % self.name_str.capitalize())
                 self.opts[self.name_str + '_host'][0] = thost
-            print("Connecting to %s HOST: %s" % (self.name_str.capitalize(), self.opts['_host'][0]))
+            print("Connecting to %s HOST: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_host'][0]))
             print("")
 
             if prompt == True or self.opts[self.name_str  + "_port"][0] == '':
                 print("%s Port not specified in %s%s_PORT or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
                 tport = input("Please type in the full %s PORT: " % self.name_str.capitalize())
                 self.opts[self.name_str + '_port'][0] = tport
-            print("Connecting to %s PORT: %s" % (self.name_str.capitalize(), self.opts['_port'][0]))
+            print("Connecting to %s PORT: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_port'][0]))
             print("")
 
             if prompt == True or self.opts[self.name_str  + "_default_db"][0] == '':
                 print("%s Default DB not specified in %s%s_DEFAULT_DB or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
                 tdefaultdb = input("Please type in the %s DEFAULT_DB: " % self.name_str.capitalize())
                 self.opts[self.name_str + '_default_db'][0] = tdefaultdb
-            print("Connecting to %s DEFAULT_DB: %s" % (self.name_str.capitalize(), self.opts['_default_db'][0]))
+            print("Connecting to %s DEFAULT_DB: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_default_db'][0]))
             print("")
 
 #            Use the following if your data source requries a password # Or comment out 
@@ -174,7 +174,7 @@ class Pyodbc(Integration):
         conn_string = "DSN=%s; Host=%s, Port=%s, Database=%s; AuthMech=%s; UseSASL=%s; UID=%s; PWD=%s; SSL=%s; AllowSelfSignedServerCert=%s" % (var[0], var[1], var[2], var[3], var[4], var[5], var[6], var[7], var[8], var[9])
 
         try:
-            self.connection = pyodbc.connect(conn_string, autocommit=True)
+            self.connection = po.connect(conn_string, autocommit=True)
             self.session = self.connection.cursor()
             result = 0
         except Exception as e:
