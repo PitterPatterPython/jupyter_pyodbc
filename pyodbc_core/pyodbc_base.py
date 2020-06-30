@@ -33,36 +33,29 @@ class Pyodbc(Integration):
     # So the following two items will look for:
     # JUPYTER_START_BASE_URL and put it into the opts dict as start_base_url
     # JUPYTER_START_USER as put it in the opts dict as start_user
-    custom_evars = [name_str + "_dsn", name_str + "_host", name_str + "_port", name_str + "_user", name_str + "_default_db"]
+    custom_evars = [name_str + "_dsn"]
 
 
     # These are the variables in the opts dict that allowed to be set by the user. These are specific to this custom integration and are joined
     # with the base_allowed_set_opts from the integration base
     # The three examples here would be "start_base_url, start_ignore_ssl_warn, and start_verbose_errors
     # Make sure these are defined in myopts!
-    custom_allowed_set_opts = [name_str + '_authmech', name_str + "_usesasl", name_str + "_usessl", name_str + "_allowselfsignedcert", name_str + "_dsn", name_str + "_host", name_str + "_port", name_str + "_user", name_str + "_default_db"] 
+    custom_allowed_set_opts = [name_str + "_dsn"] 
 
 
 
     # These are the custom options for your integration    
     myopts = {} 
     myopts[name_str + '_max_rows'] = [1000, 'Max number of rows to return, will potentially add this to queries']
-    myopts[name_str + '_user'] = ["drill", "User to connect with  - Can be set via ENV Var: JUPYTER_" + name_str.upper() + "_USER otherwise will prompt"]
     myopts[name_str + '_dsn'] = ["MyDSN", "DSN name registered with ODBCt via ENV Var: JUPYTER_" + name_str.upper() + "_DSN"]
-    myopts[name_str + '_host'] = ["myhost.mydomain.local", "Host name to connect via ENV Var: JUPYTER_" + name_str.upper() + "_HOST"]
-    myopts[name_str + '_port'] = ["21050", "Port to use to connect via ENV Var: JUPYTER_" + name_str.upper() + "_PORT"]
-    myopts[name_str + '_default_db'] = ["default", "Default DB (defaults to default) via ENV Var: JUPYTER_" + name_str.upper() + "_DEFAULT_DB"]
 
-    myopts[name_str + '_authmech'] = ["3", "Passed to the ODBC AuthMech setting (Defaults to 3)"]
-    myopts[name_str + '_usesasl'] = ["1", "Passed to the ODBC UseSASL (Defaults to 1)"]
-    myopts[name_str + '_usessl'] = ["1", "Passed to the ODBC SSL (Defaults to 1)"]
-    myopts[name_str + '_allowselfsignedcert'] = ["0", "Passed to the ODBC AllowSelfSignedServerCert (Defaults to 0)"]
+    # The very basic only requires a _dsn
 
     myopts[name_str + '_last_query'] = ["", "The last query attempted to be run"]
     myopts[name_str + '_last_use'] = ["", "The use (database) statement ran"]
 
     # Class Init function - Obtain a reference to the get_ipython()
-    def __init__(self, shell, pd_display_grid="html", authmech="3", usesasl="1", usessl="1", allowselfsignedcert="0", *args, **kwargs):
+    def __init__(self, shell, pd_display_grid="html", *args, **kwargs):
         super(Pyodbc, self).__init__(shell) # Change the class name (Start) to match your actual class name
 
     # No need to change this code
@@ -80,10 +73,6 @@ class Pyodbc(Integration):
             self.opts[k] = self.myopts[k]
         # Sets items from Class init. Modify if you modify the class init
         self.opts['pd_display_grid'][0] = pd_display_grid
-        self.opts[name_str + "_authmech"][0] = authmech
-        self.opts[name_str + "_usesasl"][0] = usesasl
-        self.opts[name_str + "_usessl"][0] = usessl
-        self.opts[name_str + "_allowselfsignedcert"][0] = allowselfsignedcert
 
 
     def disconnect(self):
