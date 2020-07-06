@@ -56,8 +56,8 @@ class Pyodbc(Integration):
 
     # Class Init function - Obtain a reference to the get_ipython()
     def __init__(self, shell, pd_display_grid="html", debug=False, *args, **kwargs):
+        super(Pyodbc, self).__init__(shell, debug) # Change the class name (Start) to match your actual class name
         self.debug = debug
-        super(Pyodbc, self).__init__(shell) # Change the class name (Start) to match your actual class name
 
     # No need to change this code
         self.opts['pd_display_grid'][0] = pd_display_grid
