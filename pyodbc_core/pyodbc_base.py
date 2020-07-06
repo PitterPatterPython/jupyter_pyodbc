@@ -55,11 +55,11 @@ class Pyodbc(Integration):
     myopts[name_str + '_last_use'] = ["", "The use (database) statement ran"]
 
     # Class Init function - Obtain a reference to the get_ipython()
-    def __init__(self, shell, pd_display_grid="html", *args, **kwargs):
+    def __init__(self, shell, pd_display_grid="html", debug=False, *args, **kwargs):
+        self.debug = debug
         super(Pyodbc, self).__init__(shell) # Change the class name (Start) to match your actual class name
 
     # No need to change this code
-        self.load_env(self.custom_evars) 
         self.opts['pd_display_grid'][0] = pd_display_grid
         if pd_display_grid == "qgrid":
             try:
@@ -71,6 +71,8 @@ class Pyodbc(Integration):
         #Add local variables to opts dict
         for k in self.myopts.keys():
             self.opts[k] = self.myopts[k]
+        self.load_env(self.custom_evars) 
+
         # Sets items from Class init. Modify if you modify the class init
         self.opts['pd_display_grid'][0] = pd_display_grid
 
