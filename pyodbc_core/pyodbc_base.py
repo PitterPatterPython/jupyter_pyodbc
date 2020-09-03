@@ -20,9 +20,7 @@ import ipywidgets as widgets
 # Put any additional imports specific to your integration here: 
 import pyodbc as po
 
-
-
-# @magics_class  # Not sure about this, should pyodbc work by itself? Or should we 
+@magics_class  # Not sure about this, should pyodbc work by itself? Or should we 
 class Pyodbc(Integration):
     # Static Variables
     # The name of the integration
@@ -33,33 +31,27 @@ class Pyodbc(Integration):
     # So the following two items will look for:
     # JUPYTER_START_BASE_URL and put it into the opts dict as start_base_url
     # JUPYTER_START_USER as put it in the opts dict as start_user
-    custom_evars = [name_str + "_dsn"]
+    custom_evars = ["pyodbc_conn_default"]
 
 
     # These are the variables in the opts dict that allowed to be set by the user. These are specific to this custom integration and are joined
     # with the base_allowed_set_opts from the integration base
     # The three examples here would be "start_base_url, start_ignore_ssl_warn, and start_verbose_errors
     # Make sure these are defined in myopts!
-    custom_allowed_set_opts = [name_str + "_dsn"] 
+    custom_allowed_set_opts = ["pyodbc_conn_default"] 
 
 
 
     # These are the custom options for your integration    
     myopts = {} 
-    myopts[name_str + '_max_rows'] = [1000, 'Max number of rows to return, will potentially add this to queries']
-    myopts[name_str + '_dsn'] = ["MyDSN", "DSN name registered with ODBCt via ENV Var: JUPYTER_" + name_str.upper() + "_DSN"]
-
-    # The very basic only requires a _dsn
-
-    myopts[name_str + '_last_query'] = ["", "The last query attempted to be run"]
-    myopts[name_str + '_last_use'] = ["", "The use (database) statement ran"]
-
+    myopts['pyodbc_max_rows'] = [1000, 'Max number of rows to return, will potentially add this to queries']
+    myopts['pyodbc_conn_default'] = ["default", 'Default instance name for connections']
+    
     # Class Init function - Obtain a reference to the get_ipython()
-    def __init__(self, shell, pd_display_grid="html", debug=False, *args, **kwargs):
+    def __init__(self, shell, pd_display_grid="html", pyodbc_conn_url_default="", debug=False, *args, **kwargs):
         super(Pyodbc, self).__init__(shell, debug=debug, pd_display_grid=pd_display_grid) # Change the class name (Start) to match your actual class name
         self.debug = debug
 
-    # No need to change this code
         self.opts['pd_display_grid'][0] = pd_display_grid
         if pd_display_grid == "qgrid":
             try:
@@ -71,124 +63,95 @@ class Pyodbc(Integration):
         #Add local variables to opts dict
         for k in self.myopts.keys():
             self.opts[k] = self.myopts[k]
-        self.load_env(self.custom_evars) 
 
-        # Sets items from Class init. Modify if you modify the class init
-        self.opts['pd_display_grid'][0] = pd_display_grid
+        self.load_env(self.custom_evars)
+        if pyodbc_conn_url_default != "":
+            if "default" in self.instances.keys():
+                print("Warning: default instance in ENV and passed to class creation - overwriting ENV")
+            self.fill_instance("default", pyodbc_conn_url_default)
 
+        self.parse_instances()
 
-    def disconnect(self):
-        if self.connected == True:
-            print("Disconnected %s Session from %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_host'][0]))
-        else:
-            print("%s Not Currently Connected - Resetting All Variables" % self.name_str.capitalize())
-        self.session = None
+    # We use a custom disconnect in pyodbc so we try to close the connection before nuking it
+    def customDisconnect(self, instance):
         try:
-            self.connection.close()
+            self.instances[instance]['connection'].close()
         except:
             pass
-        self.connection = None
-        self.connect_pass = None
-        self.connected = False
+        self.instances[instance]['connection'] = None
+        self.instances[instance]['session'] = None
+        self.instances[instance]['connected'] = False
+        #self.instances[instance]['connect_pass'] = None # Should we clear the password when we disconnect? I am going to change this to no for now 
 
 
-    def connect(self, prompt=False):
-        if self.connected == False:
-            if prompt == True or self.opts[self.name_str + '_user'][0] == '':
-                print("User not specified in %s%s_USER or user override requested" % (self.env_pre, self.name_str.upper()))
-                tuser = input("Please type user name if desired: ")
-                self.opts[self.name_str + '_user'][0] = tuser
-            print("Connecting as user %s" % self.opts[self.name_str + '_user'][0])
-            print("")
-            if prompt == True or self.opts[self.name_str  + "_dsn"][0] == '':
-                print("%s dsn not specified in %s%s_DSN or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
-                tdsn = input("Please type in the full %s DSN: " % self.name_str.capitalize())
-                self.opts[self.name_str + '_dsn'][0] = tdsn
-            print("Connecting to %s DSN: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_dsn'][0]))
-            print("")
-
-            if prompt == True or self.opts[self.name_str  + "_host"][0] == '':
-                print("%s Host not specified in %s%s_HOST or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
-                thost = input("Please type in the full %s HOST: " % self.name_str.capitalize())
-                self.opts[self.name_str + '_host'][0] = thost
-            print("Connecting to %s HOST: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_host'][0]))
-            print("")
-
-            if prompt == True or self.opts[self.name_str  + "_port"][0] == '':
-                print("%s Port not specified in %s%s_PORT or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
-                tport = input("Please type in the full %s PORT: " % self.name_str.capitalize())
-                self.opts[self.name_str + '_port'][0] = tport
-            print("Connecting to %s PORT: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_port'][0]))
-            print("")
-
-            if prompt == True or self.opts[self.name_str  + "_default_db"][0] == '':
-                print("%s Default DB not specified in %s%s_DEFAULT_DB or override requested" % (self.env_pre, self.name_str.capitalize(), self.name_str.upper()))
-                tdefaultdb = input("Please type in the %s DEFAULT_DB: " % self.name_str.capitalize())
-                self.opts[self.name_str + '_default_db'][0] = tdefaultdb
-            print("Connecting to %s DEFAULT_DB: %s" % (self.name_str.capitalize(), self.opts[self.name_str + '_default_db'][0]))
-            print("")
-
-#            Use the following if your data source requries a password # Or comment out 
-            print("Please enter the password you wish to connect with:")
-            tpass = ""
-            self.ipy.ex("from getpass import getpass\ntpass = getpass(prompt='Connection Password: ')")
-            tpass = self.ipy.user_ns['tpass']
-
-            self.connect_pass = tpass
-            self.ipy.user_ns['tpass'] = ""
-
-            # once information is gathered, run the auth routine
-
-            result = self.auth()
-
-            if result == 0:
-                self.connected = True
-                print("%s - %s Connected!" % (self.name_str.capitalize(), self.opts[self.name_str + '_host'][0]))
-            else:
-                print("Connection Error - Perhaps Bad Usename/Password?")
-
-        elif self.connected == True:
-            print(self.name_str.capitalize() + "is already connected - Please type %" + self.name_str + " for help on what you can you do")
-
-        if self.connected != True:
-            self.disconnect()
-
-    def auth(self):
-        self.session = None
+    def customAuth(self, instance):
         result = -1
-        n = self.name_str
-        kar = [n + "_dsn", n + "_host", n + "_port", n + "_default_db", n + "_authmech", n + "_usesasl", n + "_user", n + "_usessl", n + "_allowselfsignedcert"]
-        var = []
-        for x in kar:
-            var.append(self.myopts[x][0])
-            if x == n + "_user":  # Sneak in the password
-                var.append(self.connect_pass)
-        
-        # Create a session variable if needed
-        conn_string = "DSN=%s; Host=%s; Port=%s; Database=%s; AuthMech=%s; UseSASL=%s; UID=%s; PWD=%s; SSL=%s; AllowSelfSignedServerCert=%s" % (var[0], var[1], var[2], var[3], var[4], var[5], var[6], var[7], var[8], var[9])
+        inst = None
 
-        try:
-            self.connection = po.connect(conn_string, autocommit=True)
-            self.session = self.connection.cursor()
-            result = 0
-        except Exception as e:
-            str_err = str(e)
-            print("Unable to connect Error:\n%s" % str_err)
-            result = -2
+        if instance not in self.instances.keys():
+            print("Instance %s not found in instances - Connection Failed" % instance)
+            result = -3
+        else:
+            inst = self.instances[instance]
+
+        if inst is not None:
+
+            kar = [
+                ["dsn", "DSN"], ["host", "Host"], ["port", "Port"],  ["default_db", "Database"], ["authmech", "AuthMech"], 
+                ["usesasl", "UserSASL"],  ["user", "UID"], ["connect_pass", "PWD"], ["usessl", "SSL"],  ["allowselfsignedcert", "AllowSelfSignedServerCert"]
+              ]
+
+
+            top_level = ["user", "host", "port", "connect_pass"]
+            var = []
+            conn_vars = []
+            for x in kar:
+                if x[0] in top_level:
+                    try:
+                        tval = inst[x[0]]
+                    except:
+                        tval = None
+                    tkey = x[1]
+                    if x[0] == "connect_pass" and tval is None:
+                        tval = self.instances[self.opts[self.name_str + "_conn_default"][0]]['connect_pass']
+
+                else:
+                    tval = checkvar(instance, x[0])
+                    tkey = x[1]
+                if tval is not None:    
+                    conn_vars.append([tkey, tval])
+            conn_string = ""
+            for c in con_vars:
+                conn_string += "%s=%s; " % (c[0], c[1])
+            conn_string = conn_string[0:-2]
+
+            #conn_string = "DSN=%s; Host=%s; Port=%s; Database=%s; AuthMech=%s; UseSASL=%s; UID=%s; PWD=%s; SSL=%s; AllowSelfSignedServerCert=%s" % (var[0], var[1], var[2], var[3], var[4], var[5], var[6], var[7], var[8], var[9])
+
+            try:
+                self.instances[instance]['connection'] = po.connect(conn_string, autocommit=True)
+                self.session = self.instances[instance]['connection'].cursor()
+                result = 0
+            except Exception as e:
+                str_err = str(e)
+                print("Unable to connect Error:\n%s" % str_err)
+                result = -2
 
         # Here you can check if the authentication on connect is successful. If it's good, return 0, otherwise return something else and show an error
 
         return result
 
+    def validateQuery(self, query, instance):
 
-    def validateQuery(self, query):
+
         bRun = True
         bReRun = False
-        if self.opts[self.name_str + "_last_query"][0] == query:
+        if self.instances[instance]['last_query'] == query:
             # If the validation allows rerun, that we are here:
             bReRun = True
-        # Ok, we know if we are rerun or not, so let's now set the last_query 
-        self.opts[self.name_str + "_last_query"][0] = query
+        # Ok, we know if we are rerun or not, so let's now set the last_query (and last use if needed) 
+        self.instances[instance]['last_query'] = query
+        if query.strip().find("use ") == 0:
+            self.instances[instance]['last_use'] = query
 
 
         # Example Validation
@@ -212,7 +175,9 @@ class Pyodbc(Integration):
 #            bRun = False
         return bRun
 
-    def customQuery(self, query):
+
+
+    def customQuery(self, query, instance):
         mydf = None
         status = ""
         try:
@@ -233,10 +198,10 @@ class Pyodbc(Integration):
 
 
 
-# Display Help must be completely customized, please look at this Hive example
+# Display Help can be customized
     def customHelp(self):
-        print("Help for ODBC")
-
+        self.displayIntegrationHelp()
+        self.displayQueryHelp("select * from mydatabase.mytable")
 
     def as_pandas_DataFrame(self):
         cursor = self.session
@@ -249,8 +214,8 @@ class Pyodbc(Integration):
 
 
     # This is the magic name.
-    #@line_cell_magic # Removing this so we can use others down stream
-    def pyodbc(self, line, cell=None):  # Change the name of this function to your class name all lower cased
+    @line_cell_magic
+    def pyodbc(self, line, cell=None):
         if cell is None:
             line = line.replace("\r", "")
             line_handled = self.handleLine(line)
@@ -258,7 +223,11 @@ class Pyodbc(Integration):
                 print("line: %s" % line)
                 print("cell: %s" % cell)
             if not line_handled: # We based on this we can do custom things for integrations. 
-                print("I am sorry, I don't know what you want to do with your line magic, try just %" + self.name_str + "for help options")
+                if line.lower() == "testintwin":
+                    print("You've found the custom testint winning line magic!")
+                else:
+                    print("I am sorry, I don't know what you want to do with your line magic, try just %" + self.name_str + " for help options")
         else: # This is run is the cell is not none, thus it's a cell to process  - For us, that means a query
-            self.handleCell(cell)
+            self.handleCell(cell, line)
+
 

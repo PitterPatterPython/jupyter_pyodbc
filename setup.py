@@ -21,7 +21,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 version_ns = {}
 
 integration_str = "pyodbc" # This could change to hive, drill, elastic etc.
-integration_base_ver_min = '0.0.7' # This is the min version of integration base that will work. 
+integration_base_ver_min = '0.1.0' # This is the min version of integration base that will work. 
 
 with open(pjoin(here, integration_str + '_core', '_version.py')) as f:
     exec(f.read(), {}, version_ns)
