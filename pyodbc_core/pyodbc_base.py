@@ -84,9 +84,24 @@ class Pyodbc(Integration):
         #self.instances[instance]['connect_pass'] = None # Should we clear the password when we disconnect? I am going to change this to no for now 
 
 
+    def req_password(self, instance):
+        opts = None
+        retval = True
+        try:
+            opts = self.instances[instance]['options']
+        except:
+            print("Instance %s options not found" % instance)
+        try:
+            if opts['use_integrated_security'] == 1:
+                retval = False
+        except:
+            pass
+        return retval
+
     def customAuth(self, instance):
         result = -1
         inst = None
+        int_sec = False
 
         if instance not in self.instances.keys():
             print("Instance %s not found in instances - Connection Failed" % instance)
@@ -96,8 +111,14 @@ class Pyodbc(Integration):
 
         if inst is not None:
 
+            try:
+                if inst['options']['use_integrated_security'] == 1:
+                    int_sec = True
+            except:
+                pass
+
             kar = [
-                ["dsn", "DSN"], ["host", "Host"], ["port", "Port"],  ["default_db", "Database"], ["authmech", "AuthMech"], 
+                ["dsn", "DSN"], ["dbcname", "DBCNAME"], ["host", "Host"], ["port", "Port"],  ["default_db", "Database"], ["authmech", "AuthMech"], 
                 ["usesasl", "UserSASL"],  ["user", "UID"], ["connect_pass", "PWD"], ["usessl", "SSL"],  ["allowselfsignedcert", "AllowSelfSignedServerCert"]
               ]
 
@@ -107,14 +128,16 @@ class Pyodbc(Integration):
             conn_vars = []
             for x in kar:
                 if x[0] in top_level:
-                    try:
-                        tval = inst[x[0]]
-                    except:
-                        tval = None
-                    tkey = x[1]
-                    if x[0] == "connect_pass" and tval is None:
-                        tval = self.instances[self.opts[self.name_str + "_conn_default"][0]]['connect_pass']
-
+                    if int_sec == True and x[0] in ["user", "connect_pass"]: # No need to put UID and PWD in connect string
+                        pass
+                    else:
+                        try:
+                            tval = inst[x[0]]
+                        except:
+                            tval = None
+                        tkey = x[1]
+                        if x[0] == "connect_pass" and tval is None:
+                            tval = self.instances[self.opts[self.name_str + "_conn_default"][0]]['connect_pass']
                 else:
                     tval = checkvar(instance, x[0])
                     tkey = x[1]
