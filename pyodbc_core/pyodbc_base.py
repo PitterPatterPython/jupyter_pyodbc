@@ -139,12 +139,12 @@ class Pyodbc(Integration):
                         if x[0] == "connect_pass" and tval is None:
                             tval = self.instances[self.opts[self.name_str + "_conn_default"][0]]['connect_pass']
                 else:
-                    tval = checkvar(instance, x[0])
+                    tval = self.checkvar(instance, x[0])
                     tkey = x[1]
                 if tval is not None:    
                     conn_vars.append([tkey, tval])
             conn_string = ""
-            for c in con_vars:
+            for c in conn_vars:
                 conn_string += "%s=%s; " % (c[0], c[1])
             conn_string = conn_string[0:-2]
 
