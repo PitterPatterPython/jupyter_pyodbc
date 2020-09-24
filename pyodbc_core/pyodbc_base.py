@@ -26,7 +26,7 @@ class Pyodbc(Integration):
     # The name of the integration
     # The class name (Start) should be changed to match the name_str, but with the first letter upper cased.
     name_str = "pyodbc"
-
+    instances = {}
     # These are the ENV variables the integration will check when starting up. The integration_base prefix will be prepended in checking (that defaults to JUPYTER_) 
     # So the following two items will look for:
     # JUPYTER_START_BASE_URL and put it into the opts dict as start_base_url
