@@ -108,16 +108,16 @@ class Pyodbc(Integration):
 
             kar = [
                 ["dsn", "DSN"], ["dbcname", "DBCNAME"], ["host", "Host"], ["port", "Port"],  ["default_db", "Database"], ["authmech", "AuthMech"], 
-                ["usesasl", "UserSASL"],  ["user", "UID"], ["connect_pass", "PWD"], ["usessl", "SSL"],  ["allowselfsignedcert", "AllowSelfSignedServerCert"]
+                ["usesasl", "UserSASL"],  ["user", "UID"], ["enc_pass", "PWD"], ["usessl", "SSL"],  ["allowselfsignedcert", "AllowSelfSignedServerCert"]
               ]
 
 
-            top_level = ["user", "host", "port", "connect_pass"]
+            top_level = ["user", "host", "port", "enc_pass"]
             var = []
             conn_vars = []
             for x in kar:
                 if x[0] in top_level:
-                    if int_sec == True and x[0] in ["user", "connect_pass"]: # No need to put UID and PWD in connect string
+                    if int_sec == True and x[0] in ["user", "enc_pass"]: # No need to put UID and PWD in connect string
                         pass
                     else:
                         try:
@@ -125,8 +125,9 @@ class Pyodbc(Integration):
                         except:
                             tval = None
                         tkey = x[1]
-                        if x[0] == "connect_pass" and tval is None:
-                            tval = self.instances[self.opts[self.name_str + "_conn_default"][0]]['connect_pass']
+                        if x[0] == "enc_pass":
+                            tval = self.ret_dec_pass(tval)
+                            inst['connect_pass'] = ""
                 else:
                     tval = self.checkvar(instance, x[0])
                     tkey = x[1]
