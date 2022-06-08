@@ -141,8 +141,8 @@ class Pyodbc(Integration):
             #conn_string = "DSN=%s; Host=%s; Port=%s; Database=%s; AuthMech=%s; UseSASL=%s; UID=%s; PWD=%s; SSL=%s; AllowSelfSignedServerCert=%s" % (var[0], var[1], var[2], var[3], var[4], var[5], var[6], var[7], var[8], var[9])
 
             try:
-                self.instances[instance]['connection'] = po.connect(conn_string, autocommit=True)
-                self.session = self.instances[instance]['connection'].cursor()
+                inst['connection'] = po.connect(conn_string, autocommit=True)
+                inst['session'] = inst['connection'].cursor()
                 result = 0
             except Exception as e:
                 str_err = str(e)
@@ -193,9 +193,11 @@ class Pyodbc(Integration):
     def customQuery(self, query, instance):
         mydf = None
         status = ""
+
+
         try:
-            self.session.execute(query)
-            mydf = self.as_pandas_DataFrame()
+            self.instances[instance]['session'].execute(query)
+            mydf = self.as_pandas_DataFrame(instance)
             if mydf is not None:
                 status = "Success"
             else:
@@ -240,8 +242,8 @@ class Pyodbc(Integration):
 
 
 
-    def as_pandas_DataFrame(self):
-        cursor = self.session
+    def as_pandas_DataFrame(self, instance):
+        cursor = self.instances[instance]['session']
         try:
             names = [metadata[0] for metadata in cursor.description]
             ret =  pd.DataFrame([dict(zip(names, row)) for row in cursor], columns=names)
