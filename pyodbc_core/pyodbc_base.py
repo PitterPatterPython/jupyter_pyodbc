@@ -141,8 +141,10 @@ class Pyodbc(Integration):
             #conn_string = "DSN=%s; Host=%s; Port=%s; Database=%s; AuthMech=%s; UseSASL=%s; UID=%s; PWD=%s; SSL=%s; AllowSelfSignedServerCert=%s" % (var[0], var[1], var[2], var[3], var[4], var[5], var[6], var[7], var[8], var[9])
 
             try:
-                inst['connection'] = po.connect(conn_string, autocommit=True)
-                inst['session'] = inst['connection'].cursor()
+                self.instances[instance]['connection'] = po.connect(conn_string, autocommit=True)
+                self.instances[instance]['session'] = self.instances[instance]['connection'].cursor()
+#                inst['connection'] = po.connect(conn_string, autocommit=True)
+#                inst['session'] = inst['connection'].cursor()
                 result = 0
             except Exception as e:
                 str_err = str(e)
@@ -193,7 +195,9 @@ class Pyodbc(Integration):
     def customQuery(self, query, instance):
         mydf = None
         status = ""
-
+        if self.debug:
+            print(f"Instance: {instance}")
+            print(f"Type of session: {type(self.instances[instance]['session'])}")
 
         try:
             self.instances[instance]['session'].execute(query)
