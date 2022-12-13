@@ -6,8 +6,8 @@ __pycache__/**
 */__pycache__
 **/__pycache__
 jupyter_pyodbc.egg-info
-jupyter_pyodbc-info/*
-jupyter_pyodbc-info/**
+jupyter_pyodbc.egg-info/*
+jupyter_pyodbc.egg-info/**
 dist
 dist/*
 dist/**
