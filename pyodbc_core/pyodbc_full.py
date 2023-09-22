@@ -173,14 +173,12 @@ class Pyodbc(Integration):
         # This one is looking for a ; in the query. We let it run, but we warn the user
         # Basically, we print a warning but don't change the bRun variable and the bReRun doesn't matter
         if query.find(";") >= 0:
-            print("WARNING - Do not type a trailing semi colon on queries, your query will fail (like it probably did here)")
+            print("WARNING - Do not type a trailing semi colon on queries, your query may fail")
 
         # Warn and don't submit after first attempt - Second attempt go ahead and run
         # If the query doesn't have a day query, then maybe we want to WARN the user and not run the query.
         # However, if this is the second time in a row that the user has submitted the query, then they must want to run without day
         # So if bReRun is True, we allow bRun to stay true. This ensures the user to submit after warnings
-        if query.lower().find("limit ") < 0:
-            print("WARNING - Queries shoud have a limit so you don't bonkers your DOM")
         # Warn and do not allow submission
         # There is no way for a user to submit this query 
 #        if query.lower().find('limit ") < 0:
