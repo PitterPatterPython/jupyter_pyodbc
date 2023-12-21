@@ -144,8 +144,9 @@ class Pyodbc(Integration):
             #conn_string = "DSN=%s; Host=%s; Port=%s; Database=%s; AuthMech=%s; UseSASL=%s; UID=%s; PWD=%s; SSL=%s; AllowSelfSignedServerCert=%s" % (var[0], var[1], var[2], var[3], var[4], var[5], var[6], var[7], var[8], var[9])
 
             try:
-                self.instances[instance]['connection'] = po.connect(conn_string, autocommit=True)
-                self.instances[instance]['session'] = self.instances[instance]['connection'].cursor()
+                self.instances[instance]['session'] = po.connect(conn_string, autocommit=True)
+#                self.instances[instance]['connection'] = po.connect(conn_string, autocommit=True)
+#                self.instances[instance]['session'] = self.instances[instance]['connection'].cursor()
 #                inst['connection'] = po.connect(conn_string, autocommit=True)
 #                inst['session'] = inst['connection'].cursor()
                 result = 0
@@ -196,21 +197,29 @@ class Pyodbc(Integration):
             print(f"Type of session: {type(self.instances[instance]['session'])}")
 
         try:
-            self.instances[instance]['session'].execute(query)
-            mydf = self.as_pandas_DataFrame(instance)
-            if mydf is not None:
-                status = "Success"
-            else:
-                status = "Success - No Results"
+            this_cursor = self.instances[instance]['session'].cursor()
+            this_cursor.execute(query)
         except Exception as e:
             mydf = None
-            str_err = str(e)
-            if self.debug:
-                print("Error: %s" % str(e))
-            status = "Failure - query_error: " + str_err
+            this_cursor = None
+            status = f"Failure - query_error: {str(e)}"
+        if status == "":
+            try:
+                these_names = [metadata[0] for metadata in this_cursor.description]
+                mydf =  pd.DataFrame([dict(zip(these_names, row)) for row in this_cursor], columns=these_names)
+                status = "Success"
+            except:
+                mydf = None
+                statys = "Success - No Results"
+        try:
+            # Trying Closing the cursor
+            if this_cursor is not None:
+                this_cursor.close()
+        except:
+            pass
+
+
         return mydf, status
-
-
 
 
 # Display Help can be customized
