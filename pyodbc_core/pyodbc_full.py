@@ -210,7 +210,7 @@ class Pyodbc(Integration):
                 status = "Success"
             except:
                 mydf = None
-                statys = "Success - No Results"
+                status = "Success - No Results"
         try:
             # Trying Closing the cursor
             if this_cursor is not None:
