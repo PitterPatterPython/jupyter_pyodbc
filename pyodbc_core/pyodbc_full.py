@@ -252,11 +252,12 @@ class Pyodbc(Integration):
 
 
     def as_pandas_DataFrame(self, instance):
-        cursor = self.instances[instance]['session']
+        #cursor = self.instances[instance]['session']
         try:
-            names = [metadata[0] for metadata in cursor.description]
-            ret =  pd.DataFrame([dict(zip(names, row)) for row in cursor], columns=names)
-        except:
+            names = [metadata[0] for metadata in instance.description]
+            ret =  pd.DataFrame([dict(zip(names, row)) for row in instance], columns=names)
+        except Exception as err:
+            print(err)
             ret = None
         return ret
 
