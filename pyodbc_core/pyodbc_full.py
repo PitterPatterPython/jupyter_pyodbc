@@ -22,6 +22,8 @@ import jupyter_integrations_utility as jiu
 from pyodbc_core._version import __desc__
 
 import pyodbc as po
+po.pooling = False # Display PyODBC Pooling
+
 
 @magics_class  # Not sure about this, should pyodbc work by itself? Or should we 
 class Pyodbc(Integration):
